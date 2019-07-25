@@ -10,6 +10,10 @@
         p {
             color: red;
         }
+        
+        #hintMsg {
+            color: red;
+        }
     </style>
 </head>
 
@@ -18,6 +22,7 @@
     <canvas id="chessCanvas" width="650" height="650">
     Your browser does not support the HTML5 canvas tag.
     </canvas>
+    <h5 id="hintMsg">hint message</h5>
 
     <script>
         // settings
@@ -50,12 +55,32 @@
         var count = 0;
 
         function printMousePos(event) {
+            var coordinate = toCoordinate(event.clientX, event.clientY);
+            var distance = toRealDistance(coordinate.x, coordinate.y)
             if (count % 2 == 0) {
-                drawArc(event.clientX, event.clientY, cell_width / 3, 0, 2 * Math.PI, true, 'black', 'black');
+                drawArc(distance.x, distance.y, cell_width / 3, 0, 2 * Math.PI, true, 'black', 'black');
             } else {
-                drawArc(event.clientX, event.clientY, cell_width / 3, 0, 2 * Math.PI, true, 'grey', 'white');
+                drawArc(distance.x, distance.y, cell_width / 3, 0, 2 * Math.PI, true, 'grey', 'white');
             }
             count++;
+        }
+
+        function toCoordinate(left, top) {
+            var _x = (left - start_left) / cell_width;
+            var _y = (top - start_top) / cell_width;
+            return {
+                x: Math.floor(_x),
+                y: Math.floor(_y),
+            };
+        }
+
+        function toRealDistance(x, y) {
+            var _x = start_left + x * cell_width;
+            var _y = start_top + y * cell_width;
+            return {
+                x: _x,
+                y: _y,
+            }
         }
 
         function drawArc(xPos, yPos, radius,
