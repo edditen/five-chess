@@ -1,33 +1,79 @@
 <!DOCTYPE html>
 <html>
 
+<head>
+    <style>
+        #chessCanvas {
+            border: 1px solid #c5c1c1;
+        }
+        
+        p {
+            color: red;
+        }
+    </style>
+</head>
+
 <body>
 
-    <canvas id="myCanvas" width="600" height="600" style="border:1px solid #c5c1c1;">
-Your browser does not support the HTML5 canvas tag.</canvas>
+    <canvas id="chessCanvas" width="650" height="650">
+    Your browser does not support the HTML5 canvas tag.
+    </canvas>
 
     <script>
-        var start_left = 20;
-        var start_top = 20;
+        // settings
+        var start_left = 40;
+        var start_top = 40;
         var cell_nums = 15;
-        var cell_width = 30;
+        var cell_width = 40;
         var end_left = start_left + (cell_nums - 1) * cell_width;
         var end_top = start_top + (cell_nums - 1) * cell_width;
 
-        var c = document.getElementById("myCanvas");
+        // draw chess border
+        var c = document.getElementById("chessCanvas");
         var ctx = c.getContext("2d");
-        var i;
-        for (i = 0; i < cell_nums; i++) {
+        for (var i = 0; i < cell_nums; i++) {
             ctx.beginPath();
             ctx.moveTo(start_left, start_top + i * cell_width);
             ctx.lineTo(end_left, start_top + i * cell_width);
             ctx.stroke();
         }
 
-        for (i = 0; i < cell_nums; i++) {
+        for (var i = 0; i < cell_nums; i++) {
             ctx.beginPath();
             ctx.moveTo(start_left + i * cell_width, start_top);
             ctx.lineTo(start_left + i * cell_width, end_top);
+            ctx.stroke();
+        }
+
+        document.addEventListener("click", printMousePos);
+
+        var count = 0;
+
+        function printMousePos(event) {
+            if (count % 2 == 0) {
+                drawArc(event.clientX, event.clientY, cell_width / 3, 0, 2 * Math.PI, true, 'black', 'black');
+            } else {
+                drawArc(event.clientX, event.clientY, cell_width / 3, 0, 2 * Math.PI, true, 'grey', 'white');
+            }
+            count++;
+        }
+
+        function drawArc(xPos, yPos, radius,
+            startAngle, endAngle,
+            lineColor, fillColor) {
+            // var startAngle = startAngle * (Math.PI / 180);
+            // var endAngle = endAngle * (Math.PI / 180);
+
+            var radius = radius;
+            ctx.strokeStyle = lineColor;
+            ctx.fillStyle = fillColor;
+            ctx.lineWidth = 1;
+
+            ctx.beginPath();
+            ctx.arc(xPos, yPos,
+                radius,
+                startAngle, endAngle);
+            ctx.fill();
             ctx.stroke();
         }
     </script>
