@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Five Chess</title>
+    <script src="js/fabric.min.js"></script>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+
+<body>
+    <canvas id="chessCanvas" width="420" height="420">
+        Your browser does not support the HTML5 canvas tag.
+    </canvas>
+    <script>
+        // settings
+        const startLeft = 40;
+        const startTop = 40;
+        const cellNums = 12;
+        const cellWidth = 30;
+        const endLeft = startLeft + (cellNums - 1) * cellWidth;
+        const endTop = startTop + (cellNums - 1) * cellWidth;
+        const chessRadius = 10;
+
+        // chess objects
+        var chessTable = new Map();
+        var chessCount = 0;
+
+        const canvas = new fabric.Canvas('chessCanvas');
+        drawCells(canvas);
+        drawChesses(canvas, chessTable);
+
+        document.addEventListener('click', function(event) {
+            var coordinate = toCoordinate(event.clientX, event.clientY);
+            console.log(coordinate.x + ', ' + coordinate.y);
+            var key = genKey(coordinate.x, coordinate.y);
+
+            if (chessTable.has(key)) {
+                console.log("already contains key: ", key);
+                return;
+            }
+
+            var distance = toDistance(coordinate.x, coordinate.y);
+            // console.log(distance.left + ', ' + distance.top);
+            var chess;
+            if (chessCount % 2 == 0) {
+                chess = makeCircle(distance.left, distance.top, 'white');
+            } else {
+                chess = makeCircle(distance.left, distance.top, 'black');
+            }
+
+            chessTable.set(key, chess)
+            chessCount++;
+            drawChesses(canvas, chessTable);
+        });
+
+        function genKey(x, y) {
+            return x + "_" + y;
+        }
+
+        function drawChesses(canvas, chessTable) {
+            chessTable.forEach(function(value, key, map) {
+                canvas.add(value);
+            });
+        }
+
+
+        function drawCells(canvas) {
+            for (var i = 0; i < cellNums; i++) {
+                var hLine = makeLine([startLeft, startTop + i * cellWidth, endLeft, startTop + i * cellWidth]);
+                var vLine = makeLine([startLeft + i * cellWidth, startTop, startLeft + i * cellWidth, endTop]);
+                canvas.add(hLine);
+                canvas.add(vLine);
+            }
+        }
+
+        function makeLine(coords) {
+            return new fabric.Line(coords, {
+                fill: 'gray',
+                stroke: '#b22',
+                strokeWidth: 1,
+                selectable: false,
+                evented: false,
+            });
+        }
+
+        function makeCircle(left, top, color = 'white') {
+            return new fabric.Circle({
+                left: left,
+                top: top,
+                strokeWidth: 1,
+                radius: chessRadius,
+                fill: color,
+                stroke: '#666',
+                selectable: false,
+                evented: false,
+            });
+        }
+
+        function toCoordinate(left, top) {
+            var _x = (left - startLeft) / cellWidth;
+            var _y = (top - startTop) / cellWidth;
+            return {
+                x: Math.floor(_x),
+                y: Math.floor(_y),
+            };
+        }
+
+        function toDistance(x, y) {
+            var _x = startLeft + x * cellWidth - chessRadius;
+            var _y = startTop + y * cellWidth - chessRadius;
+            return {
+                left: _x,
+                top: _y,
+            }
+        }
+    </script>
+</body>
+
+</html>
