@@ -51,7 +51,7 @@ public class ChessServer {
     }
 
     protected ChannelInitializer<Channel> createInitializer(ChannelGroup group) {
-        return new ChatServerInitializer(group);
+        return new ChessServerInitializer(group);
     }
 
     public void destroy() {

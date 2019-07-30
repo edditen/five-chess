@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Echo page</title>
+    <script src="js/jquery-3.4.1.min.js"></script>
+    <script type="text/javascript">
+        var ws;
+
+        function connectToWS() {
+            var endpoint = $("#endpoint").val();
+            if (ws !== undefined) {
+                ws.close()
+            }
+            ws = new WebSocket(endpoint);
+            ws.onmessage = function(event) {
+                var leng;
+                if (event.data.size === undefined) {
+                    leng = event.data.length
+                } else {
+                    leng = event.data.size
+                }
+                console.log("onmessage. size: " + leng + ", content: " + event.data);
+            }
+            ws.onopen = function(evt) {
+                console.log("onopen.");
+            };
+            ws.onclose = function(evt) {
+                console.log("onclose.");
+            };
+            ws.onerror = function(evt) {
+                console.log("Error!");
+            };
+        }
+
+        function sendMsg() {
+            var message = $("#myMessage").val();
+            ws.send(message);
+        }
+
+        function closeConn() {
+            ws.close();
+        }
+    </script>
+</head>
+
+<body>
+
+
+
+    <form>
+        connection to: <input type="text" id="endpoint" name="endpoint" value="ws://localhost:8081/ws" style="width: 200px"><br>
+    </form>
+    <input type="button" onclick="connectToWS()" value="connect" /><br><br>
+
+    <form>
+        message: <input type="text" id="myMessage" name="myMessage" value="hi there!"><br>
+    </form>
+
+    <input type="button" onclick="sendMsg()" value="send" />
+
+    <input type="button" onclick="closeConn()" value="close" />
+
+
+</body>
+
+</html>

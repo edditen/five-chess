@@ -10,10 +10,10 @@ import io.netty.handler.codec.http.websocketx.WebSocketServerProtocolHandler;
 import io.netty.handler.stream.ChunkedWriteHandler;
 
 
-public class ChatServerInitializer extends ChannelInitializer<Channel> {
+public class ChessServerInitializer extends ChannelInitializer<Channel> {
     private final ChannelGroup group;
 
-    public ChatServerInitializer(ChannelGroup group) {
+    public ChessServerInitializer(ChannelGroup group) {
         this.group = group;
     }
 

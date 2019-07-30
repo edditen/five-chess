@@ -5,9 +5,15 @@ import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.channel.group.ChannelGroup;
 import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
 import io.netty.handler.codec.http.websocketx.WebSocketServerProtocolHandler;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class TextWebSocketFrameHandler
         extends SimpleChannelInboundHandler<TextWebSocketFrame> {
+
+    private static final Logger LOGGER = LoggerFactory
+            .getLogger(TextWebSocketFrameHandler.class);
+
     private final ChannelGroup group;
 
     public TextWebSocketFrameHandler(ChannelGroup group) {
@@ -18,17 +24,20 @@ public class TextWebSocketFrameHandler
     public void userEventTriggered(ChannelHandlerContext ctx, Object evt)
             throws Exception {
         if (evt instanceof WebSocketServerProtocolHandler.HandshakeComplete) {
+            LOGGER.debug("HandshakeComplete: {}", evt);
             ctx.pipeline().remove(HttpRequestHandler.class);
             group.writeAndFlush(
                     new TextWebSocketFrame("Client " + ctx.channel() + " joined"));
             group.add(ctx.channel());
         } else {
+            LOGGER.debug("user event trigger: {}", evt);
             super.userEventTriggered(ctx, evt);
         }
     }
 
     @Override
     public void channelRead0(ChannelHandlerContext ctx, TextWebSocketFrame msg) {
+        LOGGER.debug("read message: {}", msg);
         group.writeAndFlush(msg.retain());
     }
 }
