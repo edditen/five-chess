@@ -9,18 +9,18 @@
 </head>
 
 <body>
-    <canvas id="chessCanvas" width="650" height="650">
+    <canvas id="chessCanvas" width="420" height="420">
         Your browser does not support the HTML5 canvas tag.
     </canvas>
     <script>
         // settings
         const startLeft = 40;
         const startTop = 40;
-        const cellNums = 15;
-        const cellWidth = 40;
+        const cellNums = 12;
+        const cellWidth = 30;
         const endLeft = startLeft + (cellNums - 1) * cellWidth;
         const endTop = startTop + (cellNums - 1) * cellWidth;
-        const chessRadius = 15;
+        const chessRadius = 10;
 
         // chess objects
         var chessTable = new Map();
