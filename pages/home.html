@@ -14,54 +14,61 @@
     </canvas>
     <script>
         // settings
-        var start_left = 40;
-        var start_top = 40;
-        var cell_nums = 15;
-        var cell_width = 40;
-        var end_left = start_left + (cell_nums - 1) * cell_width;
-        var end_top = start_top + (cell_nums - 1) * cell_width;
-        var chess_radius = 15;
+        const startLeft = 40;
+        const startTop = 40;
+        const cellNums = 15;
+        const cellWidth = 40;
+        const endLeft = startLeft + (cellNums - 1) * cellWidth;
+        const endTop = startTop + (cellNums - 1) * cellWidth;
+        const chessRadius = 15;
 
         // chess objects
-        var chessArray = [];
+        var chessTable = new Map();
+        var chessCount = 0;
 
-
-        // create a wrapper around native canvas element (with id="c")
-        var canvas = new fabric.Canvas('chessCanvas');
+        const canvas = new fabric.Canvas('chessCanvas');
         drawCells(canvas);
-        drawChesses(canvas, chessArray);
+        drawChesses(canvas, chessTable);
 
-        var count = 0;
-        document.addEventListener("click", clickMouse);
-
-
-        function clickMouse(event) {
+        document.addEventListener('click', function(event) {
             var coordinate = toCoordinate(event.clientX, event.clientY);
             console.log(coordinate.x + ', ' + coordinate.y);
+            var key = genKey(coordinate.x, coordinate.y);
+
+            if (chessTable.has(key)) {
+                console.log("already contains key: ", key);
+                return;
+            }
+
             var distance = toDistance(coordinate.x, coordinate.y);
-            console.log(distance.left + ', ' + distance.top);
+            // console.log(distance.left + ', ' + distance.top);
             var chess;
-            if (count % 2 == 0) {
+            if (chessCount % 2 == 0) {
                 chess = makeCircle(distance.left, distance.top, 'white');
             } else {
                 chess = makeCircle(distance.left, distance.top, 'black');
             }
-            chessArray.push(chess);
-            count++;
-            drawChesses(canvas, chessArray);
+
+            chessTable.set(key, chess)
+            chessCount++;
+            drawChesses(canvas, chessTable);
+        });
+
+        function genKey(x, y) {
+            return x + "_" + y;
         }
 
-        function drawChesses(canvas, chessArray) {
-            for (var i = 0; i < chessArray.length; i++) {
-                canvas.add(chessArray[i]);
-            }
+        function drawChesses(canvas, chessTable) {
+            chessTable.forEach(function(value, key, map) {
+                canvas.add(value);
+            });
         }
 
 
         function drawCells(canvas) {
-            for (var i = 0; i < cell_nums; i++) {
-                var hLine = makeLine([start_left, start_top + i * cell_width, end_left, start_top + i * cell_width]);
-                var vLine = makeLine([start_left + i * cell_width, start_top, start_left + i * cell_width, end_top]);
+            for (var i = 0; i < cellNums; i++) {
+                var hLine = makeLine([startLeft, startTop + i * cellWidth, endLeft, startTop + i * cellWidth]);
+                var vLine = makeLine([startLeft + i * cellWidth, startTop, startLeft + i * cellWidth, endTop]);
                 canvas.add(hLine);
                 canvas.add(vLine);
             }
@@ -82,15 +89,17 @@
                 left: left,
                 top: top,
                 strokeWidth: 1,
-                radius: chess_radius,
+                radius: chessRadius,
                 fill: color,
-                stroke: '#666'
+                stroke: '#666',
+                selectable: false,
+                evented: false,
             });
         }
 
         function toCoordinate(left, top) {
-            var _x = (left - start_left) / cell_width;
-            var _y = (top - start_top) / cell_width;
+            var _x = (left - startLeft) / cellWidth;
+            var _y = (top - startTop) / cellWidth;
             return {
                 x: Math.floor(_x),
                 y: Math.floor(_y),
@@ -98,8 +107,8 @@
         }
 
         function toDistance(x, y) {
-            var _x = start_left + x * cell_width - chess_radius / 2;
-            var _y = start_top + y * cell_width - chess_radius / 2;
+            var _x = startLeft + x * cellWidth - chessRadius;
+            var _y = startTop + y * cellWidth - chessRadius;
             return {
                 left: _x,
                 top: _y,
