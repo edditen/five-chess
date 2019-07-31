@@ -27,7 +27,7 @@ public class TextWebSocketFrameHandler
             LOGGER.debug("HandshakeComplete event");
             ctx.pipeline().remove(HttpRequestHandler.class);
             group.writeAndFlush(
-                    new TextWebSocketFrame("Client " + ctx.channel() + " joined"));
+                    new TextWebSocketFrame("{\"type\":\"init\",\"msg\":\"a new client join\"}"));
             group.add(ctx.channel());
         } else {
             LOGGER.debug("user event trigger: {}", evt);

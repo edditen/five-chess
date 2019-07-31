@@ -66,16 +66,22 @@
             }
 
             var chess = {
-                sessionId: sessionId,
                 x: coordinate.x,
                 y: coordinate.y,
                 side: "black"
             };
+
             if (chessCount % 2 == 0) {
                 chess.side = "white";
             }
+            var dto = {
+                type: "process",
+                sessionId: sessionId,
+                msg: "",
+                chesses: [chess, ]
+            };
 
-            var chessJson = JSON.stringify(chess);
+            var chessJson = JSON.stringify(dto);
             send(ws, chessJson)
         });
 
@@ -108,11 +114,22 @@
                 leng = event.data.size
             }
             console.log("onmessage. size: " + leng + ", content: " + event.data);
-            var chess = JSON.parse(event.data);
-            var key = genKey(chess.x, chess.y);
-            chessTable.set(key, chess)
-            chessCount++;
-            drawChesses(canvas, chessTable);
+            var dto = JSON.parse(event.data);
+            if (dto["type"] === "process") {
+                var chesses = dto["chesses"];
+                chesses.forEach(function(chess) {
+                    console.log(chess);
+                    var key = genKey(chess.x, chess.y);
+                    chessTable.set(key, chess)
+                    chessCount++;
+                });
+
+                drawChesses(canvas, chessTable);
+            } else if (dto["type"] === "init") {
+                console.log("msg: ", dto["msg"]);
+            } else {
+                console.log("unsupport message type: ", dto);
+            }
         }
 
 
