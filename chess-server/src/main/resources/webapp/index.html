@@ -35,7 +35,15 @@
         var ws;
         var sessionId = "123";
         var pageURL = $(location).attr("href");
-
+        const stats = {
+            disconnect: "disconnect",
+            init: "init",
+            ready: "ready",
+            process: "process",
+            terminal: "terminal"
+        };
+        var stat = stats.disconnect; // disconnect -> init -> ready -> process -> terminal
+        var side = sideColor.white;
 
         $(document).ready(function() {
             console.log("page url: ", pageURL);
@@ -56,6 +64,11 @@
         drawChesses(canvas, chessTable);
 
         document.addEventListener('click', function(event) {
+            if (stat !== stats.ready && stat !== stats.process) {
+                //not ready for start
+                return;
+            }
+
             var coordinate = toCoordinate(event.clientX, event.clientY);
             console.log(coordinate.x + ', ' + coordinate.y);
             var key = genKey(coordinate.x, coordinate.y);
@@ -74,15 +87,12 @@
             if (chessCount % 2 == 0) {
                 chess.side = "white";
             }
-            var dto = {
-                type: "process",
-                sessionId: sessionId,
-                msg: "",
-                chesses: [chess, ]
-            };
 
-            var chessJson = JSON.stringify(dto);
-            send(ws, chessJson)
+            send(ws, JSON.stringify({
+                type: stats.process,
+                sessionId: sessionId,
+                chesses: [chess, ]
+            }))
         });
 
         function connectToWS(endpoint, onMsgCallback) {
@@ -91,9 +101,14 @@
             ws.onmessage = onMsgCallback;
             ws.onopen = function(evt) {
                 console.log("onopen.");
+                send(ws, JSON.stringify({
+                    type: stats.init,
+                    sessionId: sessionId
+                }));
             };
             ws.onclose = function(evt) {
                 console.log("onclose.");
+                stat = stats.disconnect;
             };
             ws.onerror = function(evt) {
                 console.log("Error!");
@@ -115,7 +130,7 @@
             }
             console.log("onmessage. size: " + leng + ", content: " + event.data);
             var dto = JSON.parse(event.data);
-            if (dto["type"] === "process") {
+            if (dto["type"] === stats.process) {
                 var chesses = dto["chesses"];
                 chesses.forEach(function(chess) {
                     console.log(chess);
@@ -125,10 +140,19 @@
                 });
 
                 drawChesses(canvas, chessTable);
-            } else if (dto["type"] === "init") {
-                console.log("msg: ", dto["msg"]);
+            } else if (dto["type"] === stats.init) {
+                var chesses = dto["chesses"];
+                chesses.forEach(function(chess) {
+                    console.log(chess);
+                    var key = genKey(chess.x, chess.y);
+                    chessTable.set(key, chess)
+                    chessCount++;
+                });
+                side = dto["side"];
+                stat = stats.ready;
+                drawChesses(canvas, chessTable);
             } else {
-                console.log("unsupport message type: ", dto);
+                console.log("undefined message type: ", dto);
             }
         }
 
