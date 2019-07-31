@@ -45,7 +45,12 @@ public class HttpRequestHandler extends SimpleChannelInboundHandler<FullHttpRequ
             if ("/".equals(request.uri())) {
                 path = Configs.WEB_APP_BASE + Configs.INDEX;
             } else {
-                path = Configs.WEB_APP_BASE + request.uri();
+                int index = request.uri().indexOf("?");
+                if (index == -1) {
+                    path = Configs.WEB_APP_BASE + request.uri();
+                } else {
+                    path = Configs.WEB_APP_BASE + request.uri().substring(0, index);
+                }
             }
 
 

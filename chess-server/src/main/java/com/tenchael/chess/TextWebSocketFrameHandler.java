@@ -24,7 +24,7 @@ public class TextWebSocketFrameHandler
     public void userEventTriggered(ChannelHandlerContext ctx, Object evt)
             throws Exception {
         if (evt instanceof WebSocketServerProtocolHandler.HandshakeComplete) {
-            LOGGER.debug("HandshakeComplete: {}", evt);
+            LOGGER.debug("HandshakeComplete event");
             ctx.pipeline().remove(HttpRequestHandler.class);
             group.writeAndFlush(
                     new TextWebSocketFrame("Client " + ctx.channel() + " joined"));
@@ -37,7 +37,7 @@ public class TextWebSocketFrameHandler
 
     @Override
     public void channelRead0(ChannelHandlerContext ctx, TextWebSocketFrame msg) {
-        LOGGER.debug("read message: {}", msg);
+        LOGGER.debug("read message: {}", msg.text());
         group.writeAndFlush(msg.retain());
     }
 }

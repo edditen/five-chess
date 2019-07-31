@@ -33,12 +33,20 @@
 
         // websocket client
         var ws;
+        var sessionId = "123";
         var pageURL = $(location).attr("href");
 
 
         $(document).ready(function() {
             console.log("page url: ", pageURL);
-            var wsUri = getWsUri(getLocation(pageURL));
+            var location = getLocation(pageURL);
+            var query = getJsonFromUrl(location.search);
+            var roomId = query["room"]
+            console.log("roomId: ", roomId);
+            if (roomId !== undefined && roomId !== "") {
+                sessionId = roomId;
+            }
+            var wsUri = getWsUri(location);
             console.log("ws uri: ", wsUri);
             ws = connectToWS(wsUri, onMsgCallback = msgListen);
         });
@@ -58,6 +66,7 @@
             }
 
             var chess = {
+                sessionId: sessionId,
                 x: coordinate.x,
                 y: coordinate.y,
                 side: "black"
@@ -189,6 +198,16 @@
         function getWsUri(location) {
             var wsUri = "ws://" + location.hostname + ":" + location.port + "/ws";
             return wsUri;
+        }
+
+        function getJsonFromUrl(url) {
+            var query = url.substr(1);
+            var result = {};
+            query.split("&").forEach(function(part) {
+                var item = part.split("=");
+                result[item[0]] = decodeURIComponent(item[1]);
+            });
+            return result;
         }
     </script>
 </body>
