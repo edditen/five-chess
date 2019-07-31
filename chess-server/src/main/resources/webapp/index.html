@@ -4,6 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <title>Five Chess</title>
+    <script src="js/jquery-3.4.1.min.js"></script>
     <script src="js/fabric-3.2.0.min.js"></script>
     <link rel="stylesheet" href="css/styles.css">
 </head>
@@ -25,6 +26,22 @@
         // chess objects
         var chessTable = new Map();
         var chessCount = 0;
+        const sideColor = {
+            white: "white",
+            black: "black"
+        };
+
+        // websocket client
+        var ws;
+        var pageURL = $(location).attr("href");
+
+
+        $(document).ready(function() {
+            console.log("page url: ", pageURL);
+            var wsUri = getWsUri(getLocation(pageURL));
+            console.log("ws uri: ", wsUri);
+            ws = connectToWS(wsUri, onMsgCallback = msgListen);
+        });
 
         const canvas = new fabric.Canvas('chessCanvas');
         drawCells(canvas);
@@ -40,19 +57,55 @@
                 return;
             }
 
-            var distance = toDistance(coordinate.x, coordinate.y);
-            // console.log(distance.left + ', ' + distance.top);
-            var chess;
+            var chess = {
+                x: coordinate.x,
+                y: coordinate.y,
+                side: "black"
+            };
             if (chessCount % 2 == 0) {
-                chess = makeCircle(distance.left, distance.top, 'white');
-            } else {
-                chess = makeCircle(distance.left, distance.top, 'black');
+                chess.side = "white";
             }
 
+            var chessJson = JSON.stringify(chess);
+            send(ws, chessJson)
+        });
+
+        function connectToWS(endpoint, onMsgCallback) {
+            var ws = new WebSocket(endpoint);
+
+            ws.onmessage = onMsgCallback;
+            ws.onopen = function(evt) {
+                console.log("onopen.");
+            };
+            ws.onclose = function(evt) {
+                console.log("onclose.");
+            };
+            ws.onerror = function(evt) {
+                console.log("Error!");
+            };
+            return ws;
+        }
+
+        function send(ws, msg) {
+            console.log("send msg: ", msg);
+            ws.send(msg);
+        }
+
+        function msgListen(event) {
+            var leng;
+            if (event.data.size === undefined) {
+                leng = event.data.length
+            } else {
+                leng = event.data.size
+            }
+            console.log("onmessage. size: " + leng + ", content: " + event.data);
+            var chess = JSON.parse(event.data);
+            var key = genKey(chess.x, chess.y);
             chessTable.set(key, chess)
             chessCount++;
             drawChesses(canvas, chessTable);
-        });
+        }
+
 
         function genKey(x, y) {
             return x + "_" + y;
@@ -60,7 +113,9 @@
 
         function drawChesses(canvas, chessTable) {
             chessTable.forEach(function(value, key, map) {
-                canvas.add(value);
+                var distance = toDistance(value.x, value.y);
+                const circle = makeCircle(distance.left, distance.top, sideColor[value.side]);
+                canvas.add(circle);
             });
         }
 
@@ -113,6 +168,27 @@
                 left: _x,
                 top: _y,
             }
+        }
+
+        function getLocation(href) {
+            //parser.href = "http://example.com:3000/pathname/?search=test#hash";
+            // parser.protocol; // => "http:"
+            // parser.host;     // => "example.com:3000"
+            // parser.hostname; // => "example.com"
+            // parser.port;     // => "3000"
+            // parser.pathname; // => "/pathname/"
+            // parser.hash;     // => "#hash"
+            // parser.search;   // => "?search=test"
+            // parser.origin;   // => "http://example.com:3000"
+
+            var l = document.createElement("a");
+            l.href = href;
+            return l;
+        }
+
+        function getWsUri(location) {
+            var wsUri = "ws://" + location.hostname + ":" + location.port + "/ws";
+            return wsUri;
         }
     </script>
 </body>
