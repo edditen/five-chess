@@ -69,6 +69,11 @@
                 return;
             }
 
+            if (!isMyTurn()) {
+                // not my turn
+                return;
+            }
+
             var coordinate = toCoordinate(event.clientX, event.clientY);
             console.log(coordinate.x + ', ' + coordinate.y);
             var key = genKey(coordinate.x, coordinate.y);
@@ -81,12 +86,8 @@
             var chess = {
                 x: coordinate.x,
                 y: coordinate.y,
-                side: "black"
+                side: side
             };
-
-            if (chessCount % 2 == 0) {
-                chess.side = "white";
-            }
 
             send(ws, JSON.stringify({
                 type: stats.process,
@@ -132,24 +133,28 @@
             var dto = JSON.parse(event.data);
             if (dto["type"] === stats.process) {
                 var chesses = dto["chesses"];
+                chessCount = dto["count"];
+                stat = stats.process;
+
                 chesses.forEach(function(chess) {
                     console.log(chess);
                     var key = genKey(chess.x, chess.y);
                     chessTable.set(key, chess)
-                    chessCount++;
                 });
 
                 drawChesses(canvas, chessTable);
             } else if (dto["type"] === stats.init) {
                 var chesses = dto["chesses"];
+                chessCount = dto["count"];
+                side = dto["side"];
+                stat = stats.ready;
+
                 chesses.forEach(function(chess) {
                     console.log(chess);
                     var key = genKey(chess.x, chess.y);
                     chessTable.set(key, chess)
-                    chessCount++;
                 });
-                side = dto["side"];
-                stat = stats.ready;
+
                 drawChesses(canvas, chessTable);
             } else {
                 console.log("undefined message type: ", dto);
@@ -249,6 +254,16 @@
                 result[item[0]] = decodeURIComponent(item[1]);
             });
             return result;
+        }
+
+        function isMyTurn() {
+            if (side === sideColor.black && chessCount % 2 === 0) {
+                return true;
+            } else if (side === sideColor.white && chessCount % 2 === 1) {
+                return true;
+            } else {
+                return false;
+            }
         }
     </script>
 </body>

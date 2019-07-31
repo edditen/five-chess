@@ -18,11 +18,6 @@ public class SecureChessServer extends ChessServer {
         this.context = context;
     }
 
-    @Override
-    protected ChannelInitializer<Channel> createInitializer(ChannelGroup group) {
-        return new SecureChessServerIntializer(group, context);
-    }
-
     public static void main(String[] args) throws Exception {
 //        if (args.length != 1) {
 //            System.err.println("Please give port as argument");
@@ -44,5 +39,10 @@ public class SecureChessServer extends ChessServer {
             }
         });
         future.channel().closeFuture().syncUninterruptibly();
+    }
+
+    @Override
+    protected ChannelInitializer<Channel> createInitializer(ChannelGroup group) {
+        return new SecureChessServerIntializer(group, context);
     }
 }

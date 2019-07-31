@@ -1,7 +1,6 @@
 package com.tenchael.chess;
 
-import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.TypeReference;
+import com.tenchael.chess.utils.BeanUtils;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.channel.group.ChannelGroup;
@@ -10,7 +9,9 @@ import io.netty.handler.codec.http.websocketx.WebSocketServerProtocolHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class TextWebSocketFrameHandler
@@ -18,10 +19,8 @@ public class TextWebSocketFrameHandler
 
     private static final Logger LOGGER = LoggerFactory
             .getLogger(TextWebSocketFrameHandler.class);
-
+    private static final Map<String, ChessSession> chessSessionTable = new ConcurrentHashMap<>();
     private final ChannelGroup group;
-
-    private final Map<String, Set<String>> sessionChannelId = new ConcurrentHashMap<>();
 
     public TextWebSocketFrameHandler(ChannelGroup group) {
         this.group = group;
@@ -46,40 +45,49 @@ public class TextWebSocketFrameHandler
     public void channelRead0(ChannelHandlerContext ctx, TextWebSocketFrame msg) {
         String text = msg.text();
         LOGGER.debug("read message: {}", text);
-        Map<String, Object> requestMap = JSON.parseObject(text,
-                new TypeReference<Map<String, Object>>() {
-                });
+        Map<String, Object> requestMap = BeanUtils.jsonToMap(text);
 
         String type = requestMap.get("type").toString();
         String sessionId = requestMap.get("sessionId").toString();
         Map<String, Object> response = new HashMap<>();
-        Set<String> channalIds = sessionChannelId.getOrDefault(sessionId, new HashSet<>());
+        ChessSession session = chessSessionTable.getOrDefault(sessionId, new ChessSession());
         if (Stats.init.name().equals(type)) {
-            String side = "white";
-            if (channalIds.isEmpty()) {
-                side = "black";
+            Side side = Side.white;
+            if (session.getChannelIds().size() % 2 == 0) {
+                side = Side.black;
             }
-            channalIds.add(ctx.channel().id().asShortText());
-            sessionChannelId.putIfAbsent(sessionId, channalIds);
+            session.getChannelIds().add(ctx.channel().id().asShortText());
+            chessSessionTable.putIfAbsent(sessionId, session);
 
             response.put("type", Stats.init.name());
+            response.put("sessionId", sessionId);
             response.put("side", side);
-            response.put("chesses", new ArrayList<>());
+            response.put("count", session.getCount().get());
+            response.put("chesses", session.getChesslets());
 
+            String respText = BeanUtils.objectToJson(response);
+            LOGGER.debug("response to ch: {}, msg: {}", ctx.channel().id().asShortText(), respText);
+            ctx.writeAndFlush(new TextWebSocketFrame(respText));
         } else if (Stats.process.name().equals(type)) {
-            requestMap.entrySet().stream().forEach(entry -> {
-                response.put(entry.getKey(), entry.getValue());
+            List<Map<String, Object>> chesses = (List<Map<String, Object>>) requestMap.get("chesses");
+            chesses.stream().forEach(chess -> {
+                Chesslet chesslet = (Chesslet) BeanUtils.mapToObject(chess, Chesslet.class);
+                session.getChesslets().add(chesslet);
+                session.getCount().incrementAndGet();
             });
+            response.putAll(requestMap);
+            response.put("count", session.getCount().get());
+
+            group.parallelStream()
+                    .filter(ch -> session.getChannelIds().contains(ch.id().asShortText()))
+                    .forEach(ch -> {
+                        String respText = BeanUtils.objectToJson(response);
+                        LOGGER.debug("response to ch: {}, msg: {}", ch.id().asShortText(), respText);
+                        ch.writeAndFlush(new TextWebSocketFrame(respText));
+                    });
         } else {
             LOGGER.debug("done nothing");
         }
 
-        group.parallelStream()
-                .filter(ch -> channalIds.contains(ch.id().asShortText()))
-                .forEach(ch -> {
-                    String respText = JSON.toJSONString(response);
-                    LOGGER.debug("response to ch: {}, msg: {}", ch.id(), respText);
-                    ch.writeAndFlush(new TextWebSocketFrame(respText));
-                });
     }
 }
