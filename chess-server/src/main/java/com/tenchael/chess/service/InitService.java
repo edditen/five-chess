@@ -1,13 +1,12 @@
 package com.tenchael.chess.service;
 
 import com.tenchael.chess.ChessRoom;
-import com.tenchael.chess.dto.ChessDto;
-import com.tenchael.chess.dto.ChessHeader;
-import com.tenchael.chess.dto.Role;
-import com.tenchael.chess.dto.Type;
+import com.tenchael.chess.dto.*;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 public class InitService implements Operations {
 
@@ -20,13 +19,12 @@ public class InitService implements Operations {
     @Override
     public ChessDto handle(ChessDto requestDto) {
         ChessHeader reqHeader = requestDto.getHeader();
-        ChessRoom room = chessSessionTable.getOrDefault(requestDto, new ChessRoom());
-        Role role = Role.white;
-        if (room.getClientIds().size() % 2 == 0) {
-            role = Role.black;
-        }
+        ChessRoom room = chessSessionTable.getOrDefault(reqHeader.getRoomId(), new ChessRoom());
+        Role role = disputeRole(room);
 
-        room.getClientIds().add(reqHeader.getClientId());
+        room.setRoomId(reqHeader.getRoomId());
+        ClientInfo client = new ClientInfo(reqHeader.getClientId(), role);
+        room.getClients().add(client);
         chessSessionTable.putIfAbsent(reqHeader.getRoomId(), room);
 
         ChessHeader respHeader = new ChessHeader();
@@ -41,4 +39,20 @@ public class InitService implements Operations {
         respBody.put("chesses", room.getChesslets());
         return new ChessDto(respHeader, respBody);
     }
+
+    private Role disputeRole(ChessRoom room) {
+        Set<ClientInfo> clients = room.getClients();
+        if (clients.stream()
+                .filter(client -> client.getRole() == Role.black)
+                .collect(Collectors.toSet()).isEmpty()) {
+            return Role.black;
+        }
+        if (clients.stream()
+                .filter(client -> client.getRole() == Role.white)
+                .collect(Collectors.toSet()).isEmpty()) {
+            return Role.white;
+        }
+        return Role.observer;
+    }
+
 }

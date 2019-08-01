@@ -37,7 +37,7 @@ public class TextWebSocketFrameHandler
             ChessHeader header = new ChessHeader();
             header.setType(Type.resp);
             header.setOperation(Operation.connect);
-            header.setClientId(clientCount.incrementAndGet() + "");
+            header.setClientId(ctx.channel().id().asShortText());
 
             ChessDto respDto = new ChessDto(header, new HashMap<>());
             String respText = BeanUtils.objectToJson(respDto);
@@ -58,4 +58,6 @@ public class TextWebSocketFrameHandler
         ChessDto chessDto = BeanUtils.jsonToObject(text, ChessDto.class);
         ctx.fireChannelRead(chessDto);
     }
+
+
 }

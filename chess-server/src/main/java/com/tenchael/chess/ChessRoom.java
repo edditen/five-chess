@@ -1,28 +1,30 @@
 package com.tenchael.chess;
 
+import com.tenchael.chess.dto.ClientInfo;
+
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class ChessRoom {
-    private String sessionId;
+    private String roomId;
     private AtomicInteger count = new AtomicInteger(0);
-    private Set<String> clientIds = new HashSet<>();
+    private Set<ClientInfo> clients = new HashSet<>();
     private Set<Chesslet> chesslets = new HashSet<>();
 
     public ChessRoom() {
     }
 
-    public ChessRoom(String sessionId) {
-        this.sessionId = sessionId;
+    public ChessRoom(String roomId) {
+        this.roomId = roomId;
     }
 
-    public String getSessionId() {
-        return sessionId;
+    public String getRoomId() {
+        return roomId;
     }
 
-    public void setSessionId(String sessionId) {
-        this.sessionId = sessionId;
+    public void setRoomId(String roomId) {
+        this.roomId = roomId;
     }
 
     public AtomicInteger getCount() {
@@ -33,12 +35,12 @@ public class ChessRoom {
         this.count = count;
     }
 
-    public Set<String> getClientIds() {
-        return clientIds;
+    public Set<ClientInfo> getClients() {
+        return clients;
     }
 
-    public void setClientIds(Set<String> clientIds) {
-        this.clientIds = clientIds;
+    public void setClients(Set<ClientInfo> clients) {
+        this.clients = clients;
     }
 
     public Set<Chesslet> getChesslets() {

@@ -91,11 +91,13 @@
         document.addEventListener('click', function(event) {
             if (ini.stat !== stats.process) {
                 //not ready for start
+                console.log("stat is not in process");
                 return;
             }
 
             if (!isMyTurn()) {
                 // not my turn
+                console.log("not in my turn");
                 return;
             }
 
