@@ -1,17 +1,19 @@
 package com.tenchael.chess;
 
+import com.tenchael.chess.dto.Role;
+
 public class Chesslet {
     private int x;
     private int y;
-    private Side side;
+    private Role role;
 
     public Chesslet() {
     }
 
-    public Chesslet(int x, int y, Side side) {
+    public Chesslet(int x, int y, Role role) {
         this.x = x;
         this.y = y;
-        this.side = side;
+        this.role = role;
     }
 
 
@@ -31,11 +33,34 @@ public class Chesslet {
         this.y = y;
     }
 
-    public Side getSide() {
-        return side;
+    public Role getRole() {
+        return role;
     }
 
-    public void setSide(Side side) {
-        this.side = side;
+    public void setRole(Role role) {
+        this.role = role;
+    }
+
+    @Override
+    public int hashCode() {
+        return x * 1000 + y * 10 + ((role == null)
+                ? 0
+                : role.getValue());
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+
+        if (obj == null || obj.getClass() != this.getClass()) {
+            return false;
+        }
+
+        Chesslet chesslet = (Chesslet) obj;
+
+        return (chesslet.x == this.x
+                && chesslet.y == this.y
+                && chesslet.role == this.role);
     }
 }

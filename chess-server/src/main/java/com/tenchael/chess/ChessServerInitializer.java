@@ -1,5 +1,8 @@
 package com.tenchael.chess;
 
+import com.tenchael.chess.handlers.ChessHandler;
+import com.tenchael.chess.handlers.HttpRequestHandler;
+import com.tenchael.chess.handlers.TextWebSocketFrameHandler;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelPipeline;
@@ -27,5 +30,6 @@ public class ChessServerInitializer extends ChannelInitializer<Channel> {
         pipeline.addLast(new HttpRequestHandler("/ws"));
         pipeline.addLast(new WebSocketServerProtocolHandler("/ws"));
         pipeline.addLast(new TextWebSocketFrameHandler(group));
+        pipeline.addLast(new ChessHandler(group));
     }
 }

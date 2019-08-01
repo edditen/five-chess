@@ -1,21 +1,19 @@
 package com.tenchael.chess;
 
-import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class ChessSession {
+public class ChessRoom {
     private String sessionId;
     private AtomicInteger count = new AtomicInteger(0);
-    private Set<String> channelIds = new HashSet<>();
-    private List<Chesslet> chesslets = new ArrayList<>();
+    private Set<String> clientIds = new HashSet<>();
+    private Set<Chesslet> chesslets = new HashSet<>();
 
-    public ChessSession() {
+    public ChessRoom() {
     }
 
-    public ChessSession(String sessionId) {
+    public ChessRoom(String sessionId) {
         this.sessionId = sessionId;
     }
 
@@ -35,19 +33,19 @@ public class ChessSession {
         this.count = count;
     }
 
-    public Set<String> getChannelIds() {
-        return channelIds;
+    public Set<String> getClientIds() {
+        return clientIds;
     }
 
-    public void setChannelIds(Set<String> channelIds) {
-        this.channelIds = channelIds;
+    public void setClientIds(Set<String> clientIds) {
+        this.clientIds = clientIds;
     }
 
-    public List<Chesslet> getChesslets() {
+    public Set<Chesslet> getChesslets() {
         return chesslets;
     }
 
-    public void setChesslets(List<Chesslet> chesslets) {
+    public void setChesslets(Set<Chesslet> chesslets) {
         this.chesslets = chesslets;
     }
 }

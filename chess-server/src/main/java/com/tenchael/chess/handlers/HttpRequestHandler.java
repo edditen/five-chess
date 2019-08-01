@@ -1,6 +1,7 @@
-package com.tenchael.chess;
+package com.tenchael.chess.handlers;
 
 
+import com.tenchael.chess.config.Configs;
 import io.netty.channel.*;
 import io.netty.handler.codec.http.*;
 import io.netty.handler.ssl.SslHandler;

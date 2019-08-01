@@ -1,4 +1,6 @@
-package com.tenchael.chess;
+package com.tenchael.chess.config;
+
+import com.tenchael.chess.handlers.HttpRequestHandler;
 
 import java.net.URISyntaxException;
 

@@ -14,7 +14,7 @@
         Your browser does not support the HTML5 canvas tag.
     </canvas>
     <script>
-        // settings
+        // layout settings
         const startLeft = 40;
         const startTop = 40;
         const cellNums = 12;
@@ -23,27 +23,52 @@
         const endTop = startTop + (cellNums - 1) * cellWidth;
         const chessRadius = 10;
 
-        // chess objects
-        var chessTable = new Map();
-        var chessCount = 0;
-        const sideColor = {
+        // consts
+        const roles = {
+            white: "white",
+            black: "black",
+            observer: "observer"
+        };
+
+        const roleColors = {
             white: "white",
             black: "black"
         };
 
-        // websocket client
-        var ws;
-        var sessionId = "123";
-        var pageURL = $(location).attr("href");
-        const stats = {
+        const operations = {
+            connect: "connect",
             disconnect: "disconnect",
             init: "init",
-            ready: "ready",
+            chess: "chess",
+            stop: "stop"
+        };
+
+        const stats = {
+            disconnected: "disconnected",
+            connected: "connected",
+            inited: "inited",
             process: "process",
             terminal: "terminal"
         };
-        var stat = stats.disconnect; // disconnect -> init -> ready -> process -> terminal
-        var side = sideColor.white;
+
+        const types = {
+            req: "req",
+            resp: "resp"
+        };
+
+        // chess variables
+        var chessTable = new Map();
+        var ini = {
+            chessCount: 0,
+            roomId: "123",
+            clientId: "0",
+            role: roles.white,
+            stat: stats.disconnected
+        };
+
+        // websocket client
+        var ws;
+        var pageURL = $(location).attr("href");
 
         $(document).ready(function() {
             console.log("page url: ", pageURL);
@@ -52,7 +77,7 @@
             var roomId = query["room"]
             console.log("roomId: ", roomId);
             if (roomId !== undefined && roomId !== "") {
-                sessionId = roomId;
+                ini.roomId = roomId;
             }
             var wsUri = getWsUri(location);
             console.log("ws uri: ", wsUri);
@@ -64,7 +89,7 @@
         drawChesses(canvas, chessTable);
 
         document.addEventListener('click', function(event) {
-            if (stat !== stats.ready && stat !== stats.process) {
+            if (ini.stat !== stats.process) {
                 //not ready for start
                 return;
             }
@@ -86,13 +111,20 @@
             var chess = {
                 x: coordinate.x,
                 y: coordinate.y,
-                side: side
+                role: ini.role
             };
 
             send(ws, JSON.stringify({
-                type: stats.process,
-                sessionId: sessionId,
-                chesses: [chess, ]
+                header: {
+                    type: types.req,
+                    roomId: ini.roomId,
+                    clientId: ini.clientId,
+                    operation: operations.chess,
+                    role: ini.role
+                },
+                body: {
+                    chesses: [chess, ]
+                }
             }))
         });
 
@@ -102,14 +134,11 @@
             ws.onmessage = onMsgCallback;
             ws.onopen = function(evt) {
                 console.log("onopen.");
-                send(ws, JSON.stringify({
-                    type: stats.init,
-                    sessionId: sessionId
-                }));
+                ini.stat = stats.connected
             };
             ws.onclose = function(evt) {
                 console.log("onclose.");
-                stat = stats.disconnect;
+                ini.stat = stats.disconnected;
             };
             ws.onerror = function(evt) {
                 console.log("Error!");
@@ -131,10 +160,27 @@
             }
             console.log("onmessage. size: " + leng + ", content: " + event.data);
             var dto = JSON.parse(event.data);
-            if (dto["type"] === stats.process) {
-                var chesses = dto["chesses"];
-                chessCount = dto["count"];
-                stat = stats.process;
+            var respHeader = dto["header"];
+            var respBody = dto["body"];
+            if (respHeader["operation"] === operations.connect) {
+                ini.clientId = respHeader["clientId"];
+                ini.stat = stats.connected;
+
+                send(ws, JSON.stringify({
+                    header: {
+                        type: types.req,
+                        roomId: ini.roomId,
+                        clientId: ini.clientId,
+                        operation: operations.init,
+                        role: ini.role
+                    },
+                    body: {}
+                }));
+            } else if (respHeader["operation"] === operations.init) {
+                var chesses = respBody["chesses"];
+                ini.chessCount = respBody["count"];
+                ini.role = respHeader["role"];
+                ini.stat = stats.process;
 
                 chesses.forEach(function(chess) {
                     console.log(chess);
@@ -143,11 +189,9 @@
                 });
 
                 drawChesses(canvas, chessTable);
-            } else if (dto["type"] === stats.init) {
-                var chesses = dto["chesses"];
-                chessCount = dto["count"];
-                side = dto["side"];
-                stat = stats.ready;
+            } else if (respHeader["operation"] === operations.chess) {
+                var chesses = respBody["chesses"];
+                ini.chessCount = respBody["count"];
 
                 chesses.forEach(function(chess) {
                     console.log(chess);
@@ -169,7 +213,7 @@
         function drawChesses(canvas, chessTable) {
             chessTable.forEach(function(value, key, map) {
                 var distance = toDistance(value.x, value.y);
-                const circle = makeCircle(distance.left, distance.top, sideColor[value.side]);
+                const circle = makeCircle(distance.left, distance.top, roleColors[value.role]);
                 canvas.add(circle);
             });
         }
@@ -257,9 +301,9 @@
         }
 
         function isMyTurn() {
-            if (side === sideColor.black && chessCount % 2 === 0) {
+            if (ini.role === roles.black && ini.chessCount % 2 === 0) {
                 return true;
-            } else if (side === sideColor.white && chessCount % 2 === 1) {
+            } else if (ini.role === roles.white && ini.chessCount % 2 === 1) {
                 return true;
             } else {
                 return false;
