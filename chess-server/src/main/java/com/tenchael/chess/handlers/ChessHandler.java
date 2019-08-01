@@ -81,6 +81,10 @@ public class ChessHandler extends SimpleChannelInboundHandler<ChessDto> {
             }
         }
 
+        if(clients.isEmpty()){
+            CHESS_ROOM_TABLE.remove(roomId);
+        }
+
         CHANNEL_ROOM_TABLE.remove(channelId);
         super.channelUnregistered(ctx);
     }
