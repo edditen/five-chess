@@ -32,7 +32,8 @@
 
         const roleColors = {
             white: "white",
-            black: "black"
+            black: "black",
+            observer: "gray"
         };
 
         const operations = {
@@ -62,7 +63,7 @@
             chessCount: 0,
             roomId: "123",
             clientId: "0",
-            role: roles.white,
+            role: roles.observer,
             stat: stats.disconnected
         };
 
@@ -213,11 +214,22 @@
         }
 
         function drawChesses(canvas, chessTable) {
+            //draw chess flag in title
+            const circle = makeCircle(chessRadius, chessRadius, roleColors[ini.role]);
+            canvas.add(circle);
+            //draw chess in board
             chessTable.forEach(function(value, key, map) {
                 var distance = toDistance(value.x, value.y);
                 const circle = makeCircle(distance.left, distance.top, roleColors[value.role]);
                 canvas.add(circle);
             });
+
+            if (isMyTurn()) {
+                drawMark(canvas, endLeft - chessRadius, chessRadius, "green");
+            } else {
+                drawMark(canvas, endLeft - chessRadius, chessRadius, "red");
+            }
+
         }
 
 
@@ -230,6 +242,11 @@
             }
         }
 
+        function drawMark(canvas, left, top, color) {
+            const mark = makeCircle(left, top, color, 4);
+            canvas.add(mark);
+        }
+
         function makeLine(coords) {
             return new fabric.Line(coords, {
                 fill: 'gray',
@@ -240,12 +257,12 @@
             });
         }
 
-        function makeCircle(left, top, color = 'white') {
+        function makeCircle(left, top, color, radius = chessRadius) {
             return new fabric.Circle({
                 left: left,
                 top: top,
                 strokeWidth: 1,
-                radius: chessRadius,
+                radius: radius,
                 fill: color,
                 stroke: '#666',
                 selectable: false,
@@ -272,16 +289,6 @@
         }
 
         function getLocation(href) {
-            //parser.href = "http://example.com:3000/pathname/?search=test#hash";
-            // parser.protocol; // => "http:"
-            // parser.host;     // => "example.com:3000"
-            // parser.hostname; // => "example.com"
-            // parser.port;     // => "3000"
-            // parser.pathname; // => "/pathname/"
-            // parser.hash;     // => "#hash"
-            // parser.search;   // => "?search=test"
-            // parser.origin;   // => "http://example.com:3000"
-
             var l = document.createElement("a");
             l.href = href;
             return l;
