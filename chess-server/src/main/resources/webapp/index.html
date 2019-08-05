@@ -209,6 +209,18 @@
                 });
 
                 drawChesses(canvas, chessTable);
+            } else if (respHeader["operation"] === operations.stop) {
+                var chesses = respBody["chesses"];
+                ini.chessCount = respBody["count"];
+                ini.stat = stats.terminal;
+
+                chesses.forEach(function(chess) {
+                    console.log(chess);
+                    var key = genKey(chess.x, chess.y);
+                    chessTable.set(key, chess)
+                });
+
+                drawChesses(canvas, chessTable);
             } else {
                 console.log("undefined message type: ", dto);
             }
@@ -221,8 +233,8 @@
 
         function drawChesses(canvas, chessTable) {
             //draw chess flag in title
-            const circle = makeCircle(chessRadius, chessRadius, roleColors[ini.role]);
-            canvas.add(circle);
+            const flag = makeCircle(chessRadius, chessRadius, roleColors[ini.role]);
+            canvas.add(flag);
             //draw chess in board
             chessTable.forEach(function(value, key, map) {
                 var distance = toDistance(value.x, value.y);
@@ -316,6 +328,9 @@
         }
 
         function isMyTurn() {
+            if (ini.stat !== stats.process) {
+                return false;
+            }
             if (ini.role === roles.white && ini.chessCount % 2 === 0) {
                 return true;
             } else if (ini.role === roles.black && ini.chessCount % 2 === 1) {

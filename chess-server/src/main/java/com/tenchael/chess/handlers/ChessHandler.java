@@ -43,11 +43,13 @@ public class ChessHandler extends SimpleChannelInboundHandler<ChessDto> {
 
         ChessDto respDto = operations.handle(msg);
         ChessHeader respHeader = respDto.getHeader();
+
         if (Operation.init == respHeader.getOperation()) {
             String respText = BeanUtils.objectToJson(respDto);
             LOGGER.debug("response to ch: {}, msg: {}", ctx.channel().id().asShortText(), respText);
             ctx.writeAndFlush(new TextWebSocketFrame(respText));
-        } else if (Operation.chess == respHeader.getOperation()) {
+        } else if ((Operation.chess == respHeader.getOperation())
+                || Operation.stop == respHeader.getOperation()) {
             String roomId = reqHeader.getRoomId();
             group.parallelStream()
                     .filter(ch -> channelIdsInRoom(roomId).contains(ch.id().asShortText()))
@@ -81,7 +83,8 @@ public class ChessHandler extends SimpleChannelInboundHandler<ChessDto> {
             }
         }
 
-        if(clients.isEmpty()){
+        if (clients.isEmpty()) {
+            LOGGER.info("clients is empty, remove chess room: {}", roomId);
             CHESS_ROOM_TABLE.remove(roomId);
         }
 

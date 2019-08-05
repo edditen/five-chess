@@ -36,7 +36,7 @@ public class InitService implements Operations {
 
         Map<String, Object> respBody = new HashMap<>();
         respBody.put("count", room.getCount().get());
-        respBody.put("chesses", room.getChesslets());
+        respBody.put("chesses", room.getChessletSet());
         return new ChessDto(respHeader, respBody);
     }
 
