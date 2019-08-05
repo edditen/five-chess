@@ -16,10 +16,9 @@ public class EvaluateService {
     }
 
 
-    public boolean haveFive(String roomId, Chesslet lastestChesslet) {
-        //no winner
+    public boolean haveFive(String roomId, Chesslet latestChesslet) {
         ChessRoom chessRoom = chessRoomTable.get(roomId);
-        int maxDepth = maxDepth(chessRoom, lastestChesslet);
+        int maxDepth = maxDepth(chessRoom, latestChesslet);
         return maxDepth >= 5;
     }
 

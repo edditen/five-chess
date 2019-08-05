@@ -2,6 +2,9 @@ package com.tenchael.chess;
 
 import com.tenchael.chess.dto.Role;
 
+/**
+ * chess piece
+ */
 public class Chesslet {
     private int x;
     private int y;
