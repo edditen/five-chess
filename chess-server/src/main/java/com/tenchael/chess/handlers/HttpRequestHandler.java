@@ -57,7 +57,7 @@ public class HttpRequestHandler extends SimpleChannelInboundHandler<FullHttpRequ
 
             RandomAccessFile file = new RandomAccessFile(path, "r");
             HttpResponse response = new DefaultHttpResponse(request.protocolVersion(), HttpResponseStatus.OK);
-            response.headers().set(HttpHeaderNames.CONTENT_TYPE, "text/html; charset=UTF-8");
+            contentTypeSetting(request, response);
 
             boolean keepAlive = HttpUtil.isKeepAlive(request);
 
@@ -83,5 +83,19 @@ public class HttpRequestHandler extends SimpleChannelInboundHandler<FullHttpRequ
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
         cause.printStackTrace();
         ctx.close();
+    }
+
+    private void contentTypeSetting(HttpRequest request, HttpResponse response) {
+        response.headers().set(HttpHeaderNames.CONTENT_TYPE, "text/html; charset=UTF-8");
+
+        if (request.uri().endsWith(".js")) {
+            response.headers().set(HttpHeaderNames.CONTENT_TYPE, "application/x-javascript");
+        }
+        if (request.uri().endsWith(".css")) {
+            response.headers().set(HttpHeaderNames.CONTENT_TYPE, "text/css");
+        }
+        if (request.uri().endsWith(".ico")) {
+            response.headers().set(HttpHeaderNames.CONTENT_TYPE, "image/x-icon");
+        }
     }
 }

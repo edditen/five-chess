@@ -10,9 +10,7 @@ import com.tenchael.chess.utils.BeanUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class ChessService implements Operations {
 
@@ -32,8 +30,10 @@ public class ChessService implements Operations {
         List<Map<String, Object>> chesses = (List<Map<String, Object>>) (requestDto.getBody()
                 .get("chesses"));
         boolean haveFive = false;
+        Set<Chesslet> newChesslets = new HashSet<>();
         for (Map<String, Object> chess : chesses) {
             Chesslet chesslet = BeanUtils.mapToObject(chess, Chesslet.class);
+            newChesslets.add(chesslet);
             room.putChesslet(chesslet);
             room.getCount().incrementAndGet();
             haveFive = evaluateService.haveFive(room.getRoomId(), chesslet);
@@ -52,7 +52,7 @@ public class ChessService implements Operations {
 
         Map<String, Object> respBody = new HashMap<>();
         respBody.put("count", room.getCount().get());
-        respBody.put("chesses", room.getChessletSet());
+        respBody.put("chesses", newChesslets);
 
         return new ChessDto(respHeader, respBody);
     }
