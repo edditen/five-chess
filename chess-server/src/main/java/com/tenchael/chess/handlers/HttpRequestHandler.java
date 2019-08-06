@@ -42,19 +42,7 @@ public class HttpRequestHandler extends SimpleChannelInboundHandler<FullHttpRequ
                 send100Continue(ctx);
             }
 
-            String path;
-            if ("/".equals(request.uri())) {
-                path = Configs.WEB_APP_BASE + Configs.INDEX;
-            } else {
-                int index = request.uri().indexOf("?");
-                if (index == -1) {
-                    path = Configs.WEB_APP_BASE + request.uri();
-                } else {
-                    path = Configs.WEB_APP_BASE + request.uri().substring(0, index);
-                }
-            }
-
-
+            String path = resourcePath(request);
             RandomAccessFile file = new RandomAccessFile(path, "r");
             HttpResponse response = new DefaultHttpResponse(request.protocolVersion(), HttpResponseStatus.OK);
             contentTypeSetting(request, response);
@@ -97,5 +85,20 @@ public class HttpRequestHandler extends SimpleChannelInboundHandler<FullHttpRequ
         if (request.uri().endsWith(".ico")) {
             response.headers().set(HttpHeaderNames.CONTENT_TYPE, "image/x-icon");
         }
+    }
+
+    private String resourcePath(HttpRequest request) {
+        String path;
+        if ("/".equals(request.uri())) {
+            path = Configs.WEB_APP_BASE + Configs.INDEX;
+        } else {
+            int index = request.uri().indexOf("?");
+            if (index == -1) {
+                path = Configs.WEB_APP_BASE + request.uri();
+            } else {
+                path = Configs.WEB_APP_BASE + request.uri().substring(0, index);
+            }
+        }
+        return path;
     }
 }
