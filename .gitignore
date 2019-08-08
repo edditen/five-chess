@@ -28,3 +28,5 @@ target/
 */*/log/
 */*/target/
 */*/*.iml
+dist/classes/
+dist/lib/
