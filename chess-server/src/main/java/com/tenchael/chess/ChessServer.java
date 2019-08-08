@@ -10,30 +10,53 @@ import io.netty.channel.group.DefaultChannelGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.util.concurrent.ImmediateEventExecutor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.net.InetSocketAddress;
+import java.util.Properties;
 
 public class ChessServer {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(ChessServer.class);
 
     private final ChannelGroup channelGroup = new DefaultChannelGroup(
             ImmediateEventExecutor.INSTANCE);
     private final EventLoopGroup group = new NioEventLoopGroup();
+    private final Properties properties = new Properties();
     private Channel channel;
 
-    public static void main(String[] args) throws Exception {
-//        if (args.length != 1) {
-//            System.err.println("Please give port as argument");
-//            System.exit(1);
-//        }
-        int port = 8081;
+    public ChessServer() {
+        String pathProp = System.getProperty("configFile");
+        if (pathProp == null || pathProp.trim().length() == 0) {
+            try (InputStream input = ChessServer.class.getClassLoader()
+                    .getResourceAsStream("app.properties")) {
+                properties.load(input);
+            } catch (IOException ex) {
+                LOGGER.error("read properties error", ex);
+            }
+        } else {
+            try (InputStream input = new FileInputStream(pathProp)) {
+                properties.load(input);
+            } catch (IOException ex) {
+                LOGGER.error("read properties error", ex);
+            }
+        }
+    }
 
-        final ChessServer endpoint = new ChessServer();
-        ChannelFuture future = endpoint.start(new InetSocketAddress(port));
+    public static void main(String[] args) throws Exception {
+        final ChessServer chessServer = new ChessServer();
+        int port = Integer.valueOf(chessServer.properties.get("port").toString());
+
+        ChannelFuture future = chessServer.start(new InetSocketAddress(port));
 
         Runtime.getRuntime().addShutdownHook(new Thread() {
             @Override
             public void run() {
-                endpoint.destroy();
+                chessServer.destroy();
             }
         });
         future.channel().closeFuture().syncUninterruptibly();
@@ -61,5 +84,12 @@ public class ChessServer {
         channelGroup.close();
         group.shutdownGracefully();
     }
+
+
+    private void properties(String[] args) {
+
+
+    }
+
 
 }

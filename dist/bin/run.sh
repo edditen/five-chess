@@ -7,6 +7,7 @@ BINDIR="${BASH_SOURCE-$0}"
 BINDIR="$(dirname "${BINDIR}")"
 BASEDIR="$(cd "${BINDIR}"/..; pwd)"
 CFGDIR="$(cd "${BASEDIR}"/conf; pwd)"
+CFGFILE="$CFGDIR"/app.properties
 
 APP_MAIN="com.tenchael.chess.ChessServer"
 
@@ -30,6 +31,7 @@ JAVA_OPT="${JAVA_OPT} -Djava.ext.dirs=${JAVA_HOME}/jre/lib/ext:${BASE_DIR}/lib"
 JAVA_OPT="${JAVA_OPT} ${JAVA_OPT_EXT}"
 JAVA_OPT="${JAVA_OPT} -cp ${CLASSPATH}"
 JAVA_OPT="${JAVA_OPT} $APP_MAIN"
+JAVA_OPT="${JAVA_OPT} -DconfigFile=${CFGFILE}"
 
 
 
