@@ -4,6 +4,10 @@ BINDIR="${BASH_SOURCE-$0}"
 BINDIR="$(dirname "${BINDIR}")"
 BASEDIR="$(cd "${BINDIR}"/..; pwd)"
 
+# mkdirs
+mkdir -p "$BASEDIR"/classes
+mkdir -p "$BASEDIR"/lib
+
 ## clear work
 rm -rf "$BASEDIR"/classes/*
 rm -rf "$BASEDIR"/lib/*
