@@ -1,110 +1,345 @@
-<!DOCTYPE html>
-<html>
+<!doctype html>
+<html lang="en">
 
 <head>
-    <style>
-        #chessCanvas {
-            border: 1px solid #c5c1c1;
-        }
-        
-        p {
-            color: red;
-        }
-        
-        .hintMsg {
-            color: red;
-        }
-    </style>
+    <meta charset="UTF-8">
+    <title>Five Chess</title>
+    <script src="js/jquery-3.4.1.min.js"></script>
+    <script src="js/fabric-3.2.0.min.js"></script>
+    <link rel="stylesheet" href="css/styles.css">
 </head>
 
 <body>
-
-    <canvas id="chessCanvas" width="650" height="650">
-    Your browser does not support the HTML5 canvas tag.
+    <canvas id="chessCanvas" width="420" height="420">
+        Your browser does not support the HTML5 canvas tag.
     </canvas>
-    <h5 class="hintMsg">hint message</h5>
-
     <script>
-        // settings
-        var start_left = 40;
-        var start_top = 40;
-        var cell_nums = 15;
-        var cell_width = 40;
-        var end_left = start_left + (cell_nums - 1) * cell_width;
-        var end_top = start_top + (cell_nums - 1) * cell_width;
+        // layout settings
+        const startLeft = 40;
+        const startTop = 40;
+        const cellNums = 12;
+        const cellWidth = 30;
+        const endLeft = startLeft + (cellNums - 1) * cellWidth;
+        const endTop = startTop + (cellNums - 1) * cellWidth;
+        const chessRadius = 10;
 
-        // draw chess border
-        var c = document.getElementById("chessCanvas");
-        var ctx = c.getContext("2d");
-        for (var i = 0; i < cell_nums; i++) {
-            ctx.beginPath();
-            ctx.moveTo(start_left, start_top + i * cell_width);
-            ctx.lineTo(end_left, start_top + i * cell_width);
-            ctx.stroke();
-        }
+        // consts
+        const roles = {
+            white: "white",
+            black: "black",
+            observer: "observer"
+        };
 
-        for (var i = 0; i < cell_nums; i++) {
-            ctx.beginPath();
-            ctx.moveTo(start_left + i * cell_width, start_top);
-            ctx.lineTo(start_left + i * cell_width, end_top);
-            ctx.stroke();
-        }
+        const roleColors = {
+            white: "white",
+            black: "black",
+            observer: "gray"
+        };
 
-        document.addEventListener("click", printMousePos);
+        const operations = {
+            connect: "connect",
+            disconnect: "disconnect",
+            init: "init",
+            chess: "chess",
+            stop: "stop"
+        };
 
-        var count = 0;
+        const stats = {
+            disconnected: "disconnected",
+            connected: "connected",
+            inited: "inited",
+            process: "process",
+            terminal: "terminal"
+        };
 
-        function printMousePos(event) {
-            var coordinate = toCoordinate(event.clientX, event.clientY);
-            var distance = toRealDistance(coordinate.x, coordinate.y)
-            if (count % 2 == 0) {
-                drawArc(distance.x, distance.y, cell_width / 3, 0, 2 * Math.PI, true, 'black', 'black');
-            } else {
-                drawArc(distance.x, distance.y, cell_width / 3, 0, 2 * Math.PI, true, 'grey', 'white');
+        const types = {
+            req: "req",
+            resp: "resp"
+        };
+
+        // chess variables
+        var chessTable = new Map();
+        var ini = {
+            chessCount: 0,
+            roomId: "123",
+            clientId: "0",
+            role: roles.observer,
+            stat: stats.disconnected
+        };
+
+        // websocket client
+        var ws;
+        var pageURL = $(location).attr("href");
+
+        $(document).ready(function() {
+            console.log("page url: ", pageURL);
+            var location = getLocation(pageURL);
+            var query = getJsonFromUrl(location.search);
+            var roomId = query["room"]
+            console.log("roomId: ", roomId);
+            if (roomId !== undefined && roomId !== "") {
+                ini.roomId = roomId;
             }
-            count++;
+            var wsUri = getWsUri(location);
+            console.log("ws uri: ", wsUri);
+            ws = connectToWS(wsUri, onMsgCallback = msgListen);
+        });
+
+        const canvas = new fabric.Canvas('chessCanvas');
+        drawCells(canvas);
+        drawChesses(canvas, chessTable);
+
+        document.addEventListener('click', function(event) {
+            if (ini.stat !== stats.process) {
+                //not ready for start
+                console.log("stat is not in process");
+                return;
+            }
+
+            if (!isMyTurn()) {
+                // not my turn
+                console.log("not in my turn");
+                return;
+            }
+
+            var coordinate = toCoordinate(event.clientX, event.clientY);
+            console.log(coordinate.x + ', ' + coordinate.y);
+
+            if (coordinate.x < 0 || coordinate.x >= cellNums ||
+                coordinate.y < 0 || coordinate.y >= cellNums) {
+                return;
+            }
+
+            var key = genKey(coordinate.x, coordinate.y);
+
+            if (chessTable.has(key)) {
+                console.log("already contains key: ", key);
+                return;
+            }
+
+            var chess = {
+                x: coordinate.x,
+                y: coordinate.y,
+                role: ini.role
+            };
+
+            send(ws, JSON.stringify({
+                header: {
+                    type: types.req,
+                    roomId: ini.roomId,
+                    clientId: ini.clientId,
+                    operation: operations.chess,
+                    role: ini.role
+                },
+                body: {
+                    chesses: [chess, ]
+                }
+            }))
+        });
+
+        function connectToWS(endpoint, onMsgCallback) {
+            var ws = new WebSocket(endpoint);
+
+            ws.onmessage = onMsgCallback;
+            ws.onopen = function(evt) {
+                console.log("onopen.");
+                ini.stat = stats.connected
+            };
+            ws.onclose = function(evt) {
+                console.log("onclose.");
+                ini.stat = stats.disconnected;
+            };
+            ws.onerror = function(evt) {
+                console.log("Error!");
+            };
+            return ws;
+        }
+
+        function send(ws, msg) {
+            console.log("send msg: ", msg);
+            ws.send(msg);
+        }
+
+        function msgListen(event) {
+            var leng;
+            if (event.data.size === undefined) {
+                leng = event.data.length
+            } else {
+                leng = event.data.size
+            }
+            console.log("onmessage. size: " + leng + ", content: " + event.data);
+            var dto = JSON.parse(event.data);
+            var respHeader = dto["header"];
+            var respBody = dto["body"];
+            if (respHeader["operation"] === operations.connect) {
+                ini.clientId = respHeader["clientId"];
+                ini.stat = stats.connected;
+
+                send(ws, JSON.stringify({
+                    header: {
+                        type: types.req,
+                        roomId: ini.roomId,
+                        clientId: ini.clientId,
+                        operation: operations.init,
+                        role: ini.role
+                    },
+                    body: {}
+                }));
+            } else if (respHeader["operation"] === operations.init) {
+                var chesses = respBody["chesses"];
+                ini.chessCount = respBody["count"];
+                ini.role = respHeader["role"];
+                ini.stat = stats.process;
+
+                chesses.forEach(function(chess) {
+                    console.log(chess);
+                    var key = genKey(chess.x, chess.y);
+                    chessTable.set(key, chess)
+                });
+
+                drawChesses(canvas, chessTable);
+            } else if (respHeader["operation"] === operations.chess) {
+                var chesses = respBody["chesses"];
+                ini.chessCount = respBody["count"];
+
+                chesses.forEach(function(chess) {
+                    console.log(chess);
+                    var key = genKey(chess.x, chess.y);
+                    chessTable.set(key, chess)
+                });
+
+                drawChesses(canvas, chessTable);
+            } else if (respHeader["operation"] === operations.stop) {
+                var chesses = respBody["chesses"];
+                ini.chessCount = respBody["count"];
+                ini.stat = stats.terminal;
+
+                chesses.forEach(function(chess) {
+                    console.log(chess);
+                    var key = genKey(chess.x, chess.y);
+                    chessTable.set(key, chess)
+                });
+
+                drawChesses(canvas, chessTable);
+            } else {
+                console.log("undefined message type: ", dto);
+            }
+        }
+
+
+        function genKey(x, y) {
+            return x + "_" + y;
+        }
+
+        function drawChesses(canvas, chessTable) {
+            //draw chess flag in title
+            const flag = makeCircle(chessRadius, chessRadius, roleColors[ini.role]);
+            canvas.add(flag);
+            //draw chess in board
+            chessTable.forEach(function(value, key, map) {
+                var distance = toDistance(value.x, value.y);
+                const circle = makeCircle(distance.left, distance.top, roleColors[value.role]);
+                canvas.add(circle);
+            });
+
+            if (isMyTurn()) {
+                drawMark(canvas, endLeft - chessRadius, chessRadius, "green");
+            } else {
+                drawMark(canvas, endLeft - chessRadius, chessRadius, "red");
+            }
+
+        }
+
+
+        function drawCells(canvas) {
+            for (var i = 0; i < cellNums; i++) {
+                var hLine = makeLine([startLeft, startTop + i * cellWidth, endLeft, startTop + i * cellWidth]);
+                var vLine = makeLine([startLeft + i * cellWidth, startTop, startLeft + i * cellWidth, endTop]);
+                canvas.add(hLine);
+                canvas.add(vLine);
+            }
+        }
+
+        function drawMark(canvas, left, top, color) {
+            const mark = makeCircle(left, top, color, 4);
+            canvas.add(mark);
+        }
+
+        function makeLine(coords) {
+            return new fabric.Line(coords, {
+                fill: 'gray',
+                stroke: '#b22',
+                strokeWidth: 1,
+                selectable: false,
+                evented: false,
+            });
+        }
+
+        function makeCircle(left, top, color, radius = chessRadius) {
+            return new fabric.Circle({
+                left: left,
+                top: top,
+                strokeWidth: 1,
+                radius: radius,
+                fill: color,
+                stroke: '#666',
+                selectable: false,
+                evented: false,
+            });
         }
 
         function toCoordinate(left, top) {
-            var _x = (left - start_left) / cell_width;
-            var _y = (top - start_top) / cell_width;
+            var _x = (left - startLeft) / cellWidth;
+            var _y = (top - startTop) / cellWidth;
             return {
                 x: Math.floor(_x),
                 y: Math.floor(_y),
             };
         }
 
-        function toRealDistance(x, y) {
-            var _x = start_left + x * cell_width;
-            var _y = start_top + y * cell_width;
+        function toDistance(x, y) {
+            var _x = startLeft + x * cellWidth - chessRadius;
+            var _y = startTop + y * cellWidth - chessRadius;
             return {
-                x: _x,
-                y: _y,
+                left: _x,
+                top: _y,
             }
         }
 
-        function drawArc(xPos, yPos, radius,
-            startAngle, endAngle,
-            lineColor, fillColor) {
-            // var startAngle = startAngle * (Math.PI / 180);
-            // var endAngle = endAngle * (Math.PI / 180);
+        function getLocation(href) {
+            var l = document.createElement("a");
+            l.href = href;
+            return l;
+        }
 
-            var radius = radius;
-            ctx.strokeStyle = lineColor;
-            ctx.fillStyle = fillColor;
-            ctx.lineWidth = 1;
+        function getWsUri(location) {
+            var wsUri = "ws://" + location.hostname + ":" + location.port + "/ws";
+            return wsUri;
+        }
 
-            ctx.beginPath();
-            ctx.arc(xPos, yPos,
-                radius,
-                startAngle, endAngle);
-            ctx.fill();
-            ctx.stroke();
+        function getJsonFromUrl(url) {
+            var query = url.substr(1);
+            var result = {};
+            query.split("&").forEach(function(part) {
+                var item = part.split("=");
+                result[item[0]] = decodeURIComponent(item[1]);
+            });
+            return result;
+        }
+
+        function isMyTurn() {
+            if (ini.stat !== stats.process) {
+                return false;
+            }
+            if (ini.role === roles.white && ini.chessCount % 2 === 0) {
+                return true;
+            } else if (ini.role === roles.black && ini.chessCount % 2 === 1) {
+                return true;
+            } else {
+                return false;
+            }
         }
     </script>
-
-    <p><strong>Note:</strong> Five Chess platform</p>
-
 </body>
 
 </html>

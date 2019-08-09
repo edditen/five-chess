@@ -2,6 +2,7 @@ package com.tenchael.chess.handlers;
 
 
 import com.tenchael.chess.config.Configs;
+import com.tenchael.chess.config.Constants;
 import io.netty.channel.*;
 import io.netty.handler.codec.http.*;
 import io.netty.handler.ssl.SslHandler;
@@ -15,9 +16,12 @@ public class HttpRequestHandler extends SimpleChannelInboundHandler<FullHttpRequ
 
     private static final Logger LOGGER = LoggerFactory.getLogger(HttpRequestHandler.class);
 
+    private static final String WEB_BASE = Configs.get(Constants.WEB_APP_BASE,
+            Configs.DEFAULT_WEB_APP_BASE);
+
 
     static {
-        LOGGER.debug("pages location: {}", Configs.WEB_APP_BASE);
+        LOGGER.debug("pages location: {}", WEB_BASE);
     }
 
     private final String wsUri;
@@ -90,13 +94,13 @@ public class HttpRequestHandler extends SimpleChannelInboundHandler<FullHttpRequ
     private String resourcePath(HttpRequest request) {
         String path;
         if ("/".equals(request.uri())) {
-            path = Configs.WEB_APP_BASE + Configs.INDEX;
+            path = WEB_BASE + Configs.get(Constants.INDEX_PAGE, "index.html");
         } else {
             int index = request.uri().indexOf("?");
             if (index == -1) {
-                path = Configs.WEB_APP_BASE + request.uri();
+                path = WEB_BASE + request.uri();
             } else {
-                path = Configs.WEB_APP_BASE + request.uri().substring(0, index);
+                path = WEB_BASE + request.uri().substring(0, index);
             }
         }
         return path;
