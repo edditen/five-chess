@@ -12,10 +12,14 @@ import io.netty.channel.group.DefaultChannelGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.util.concurrent.ImmediateEventExecutor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.net.InetSocketAddress;
 
 public class ChessServer {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(ChessServer.class);
 
     private final ChannelGroup channelGroup = new DefaultChannelGroup(
             ImmediateEventExecutor.INSTANCE);
@@ -28,6 +32,8 @@ public class ChessServer {
 
         int port = Configs.getInt(Constants.PORT, 8080);
         ChannelFuture future = chessServer.start(new InetSocketAddress(port));
+
+        LOGGER.info("started chess server, listen on: {}", port);
 
         Runtime.getRuntime().addShutdownHook(new Thread() {
             @Override
