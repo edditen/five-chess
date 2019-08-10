@@ -1,5 +1,7 @@
 package com.tenchael.chess;
 
+import com.tenchael.chess.config.Configs;
+import com.tenchael.chess.config.Constants;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelInitializer;
@@ -7,10 +9,15 @@ import io.netty.channel.group.ChannelGroup;
 import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslContextBuilder;
 import io.netty.handler.ssl.util.SelfSignedCertificate;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.net.InetSocketAddress;
 
 public class SecureChessServer extends ChessServer {
+
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(SecureChessServer.class);
 
     private final SslContext context;
 
@@ -19,18 +26,15 @@ public class SecureChessServer extends ChessServer {
     }
 
     public static void main(String[] args) throws Exception {
-//        if (args.length != 1) {
-//            System.err.println("Please give port as argument");
-//            System.exit(1);
-//        }
-        int port = 8082;
         SelfSignedCertificate cert = new SelfSignedCertificate();
-//        SslContext context = SslContext.newServerContext(cert.certificate(), cert.privateKey());
         SslContext context = SslContextBuilder
                 .forServer(cert.certificate(), cert.privateKey())
                 .build();
         final SecureChessServer endpoint = new SecureChessServer(context);
+
+        int port = Configs.getInt(Constants.PORT, 8080);
         ChannelFuture future = endpoint.start(new InetSocketAddress(port));
+        LOGGER.info("started chess server, listen on: {}", port);
 
         Runtime.getRuntime().addShutdownHook(new Thread() {
             @Override
