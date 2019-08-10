@@ -32,6 +32,7 @@ public class Configs {
                 LOGGER.error("read properties error", ex);
             }
         } else {
+            LOGGER.info("config file: {}", pathProp);
             try (InputStream input = new FileInputStream(pathProp)) {
                 properties.load(input);
             } catch (IOException ex) {

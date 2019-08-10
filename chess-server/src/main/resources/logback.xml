@@ -9,11 +9,11 @@
         </layout>
     </appender>
 
-    <logger name="com.tenchael" level="debug" additivity="false">
+    <logger name="com.tenchael.chess" level="INFO" additivity="false">
         <appender-ref ref="CONSOLE"/>
     </logger>
 
-    <root level="error">
+    <root level="WARN">
         <appender-ref ref="CONSOLE"/>
     </root>
 
