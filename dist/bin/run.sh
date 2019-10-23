@@ -21,7 +21,7 @@ CLASSPATH="$BASE_DIR/classes:$CLASSPATH"
 
 
 
-JAVA_OPT="${JAVA_OPT} -server -Xms1g -Xmx1g -Xmn512m -XX:MetaspaceSize=64m -XX:MaxMetaspaceSize=128m"
+JAVA_OPT="${JAVA_OPT} -server -Xms128m -Xmx256m -Xmn128m -XX:MetaspaceSize=64m -XX:MaxMetaspaceSize=64m"
 JAVA_OPT="${JAVA_OPT} -XX:+UseConcMarkSweepGC -XX:+UseCMSCompactAtFullCollection -XX:CMSInitiatingOccupancyFraction=70 -XX:+CMSParallelRemarkEnabled -XX:SoftRefLRUPolicyMSPerMB=0 -XX:+CMSClassUnloadingEnabled -XX:SurvivorRatio=8  -XX:-UseParNewGC"
 JAVA_OPT="${JAVA_OPT} -verbose:gc -Xloggc:$BASE_DIR/logs/gc.log -XX:+PrintGCDetails"
 JAVA_OPT="${JAVA_OPT} -XX:-OmitStackTraceInFastThrow"
@@ -34,4 +34,5 @@ JAVA_OPT="${JAVA_OPT} -cp ${CLASSPATH}"
 JAVA_OPT="${JAVA_OPT} $APP_MAIN"
 
 
-$JAVA ${JAVA_OPT} $@
+# nohup $JAVA ${JAVA_OPT} $@ >/dev/null 2>&1 &
+$JAVA ${JAVA_OPT} $@ 

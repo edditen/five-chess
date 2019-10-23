@@ -1,20 +1,35 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration>
+    <property name="LOG_PATH" value="/tmp/logs"/>
+    <property name="LOG_CHARSET" value="UTF-8"/>
+    <property name="LOG_PATTERN" value="%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{72}.%M - %msg%n"/>
+
 
     <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
         <layout class="ch.qos.logback.classic.PatternLayout">
-            <Pattern>
-                %d{HH:mm:ss.SSS} [%t] %-5level %logger{36} - %msg%n
-            </Pattern>
+            <Pattern>${LOG_PATTERN}</Pattern>
         </layout>
     </appender>
 
-    <logger name="com.tenchael.chess" level="INFO" additivity="false">
-        <appender-ref ref="CONSOLE"/>
-    </logger>
+    <appender name="APP_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOG_PATH}/five-chess.log</file>
+        <append>true</append>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>${LOG_PATH}/five-chess.%d{yyyy-MM-dd}.%i.log.zip</fileNamePattern>
+            <timeBasedFileNamingAndTriggeringPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
+                <maxFileSize>30MB</maxFileSize>
+            </timeBasedFileNamingAndTriggeringPolicy>
+            <maxHistory>7</maxHistory>
+        </rollingPolicy>
+        <encoder>
+            <pattern>${LOG_PATTERN}</pattern>
+            <charset>${LOG_CHARSET}</charset>
+        </encoder>
+    </appender>
 
-    <root level="WARN">
-        <appender-ref ref="CONSOLE"/>
+    <root level="DEBUG">
+        <!--<appender-ref ref="STDOUT" />-->
+        <appender-ref ref="APP_FILE"/>
     </root>
 
 </configuration>
